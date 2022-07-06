@@ -4,5 +4,5 @@ The mock draft can then be run from the command line with a list of players outp
 
 # How to use:
 To use this program simply download the files and then navigate to the "fantasy" directory in a command line. Then type in the command:
-mvnw spring-boot:run
+"mvnw spring-boot:run"
 and the program will start.
