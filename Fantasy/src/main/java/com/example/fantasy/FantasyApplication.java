@@ -27,12 +27,23 @@ public class FantasyApplication implements CommandLineRunner {
 
         // Create tables
         jdbcTemplate.execute("DROP TABLE Players, Team IF EXISTS");
-        jdbcTemplate.execute(("CREATE TABLE Team(id INT, name VARCHAR(24), wins INT, losses INT, ties INT," +
-                "PRIMARY KEY(id))"));
+        jdbcTemplate.execute(("CREATE TABLE Teams(id INT NOT NULL AUTO_INCREMENT, name VARCHAR(24), PRIMARY KEY(id))"));
         jdbcTemplate.execute("CREATE TABLE Players(id INT, rank INT, name VARCHAR(24), pro_team VARCHAR(24)," +
-                "pos VARCHAR(24), hand CHAR, team_id INT, PRIMARY KEY(id), FOREIGN KEY(team_id) REFERENCES Team(id))");
+                "pos VARCHAR(24), hand CHAR, team_id INT, PRIMARY KEY(id), FOREIGN KEY(team_id) REFERENCES Teams(id))");
 
         log.info("Filling tables...");
+        // Default teams
+        for (int i = 0; i < 12; i++) {
+            jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?", "Team " + i);
+        }
+
+        // Players
+
+
+        Draft d = new Draft(jdbcTemplate);
+        d.start();
+
+
     }
 
 }

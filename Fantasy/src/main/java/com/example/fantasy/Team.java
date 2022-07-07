@@ -7,12 +7,23 @@ public class Team {
 
     private Roster roster;
 
-    private int wins;
-    private int losses;
-    private int ties;
-
     public Team(String name) {
         this.name = name;
+    }
+
+    public Team() {
+    }
+
+    public void setId(int id) {
+        this.id = id;
+    }
+
+    public void setName(String name) {
+        this.name = name;
+    }
+
+    public void setRoster(Roster roster) {
+        this.roster = roster;
     }
 
     public int getId() {
@@ -25,17 +36,5 @@ public class Team {
 
     public Roster getRoster() {
         return roster;
-    }
-
-    public int getWins() {
-        return wins;
-    }
-
-    public int getLosses() {
-        return losses;
-    }
-
-    public int getTies() {
-        return ties;
     }
 }
