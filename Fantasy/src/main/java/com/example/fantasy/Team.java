@@ -5,7 +5,7 @@ public class Team {
 
     private String name;
 
-    public Roster roster;
+    public Roster roster = new Roster();
 
     public Team(String name) {
         this.name = name;
