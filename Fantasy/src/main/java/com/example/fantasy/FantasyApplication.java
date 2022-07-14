@@ -28,13 +28,14 @@ public class FantasyApplication implements CommandLineRunner {
         log.info("Creating Tables...");
 
         // Create tables
-        jdbcTemplate.execute("DROP TABLE Players, Team, Player_Info IF EXISTS");
-        jdbcTemplate.execute(("CREATE TABLE Teams(id INT NOT NULL AUTO_INCREMENT, name VARCHAR(24), PRIMARY KEY(id))"));
-        jdbcTemplate.execute("CREATE TABLE Players(id INT NOT NULL AUTO_INCREMENT, rank INT, name VARCHAR(24), " +
-                "pro_team VARCHAR(24),pos VARCHAR(24), hand CHAR, team_id INT, drafted BIT DEFAULT 0, PRIMARY KEY(id), " +
-                "FOREIGN KEY(team_id) REFERENCES Teams(id))");
-        jdbcTemplate.execute("CREATE TABLE Player_Info(player_id INT, position VARCHAR(2), " +
-                "FOREIGN KEY(player_id) REFERENCES Players(id))");
+        jdbcTemplate.execute("DROP TABLE Players, Team, Player_Info, Roster IF EXISTS");
+        jdbcTemplate.execute("CREATE TABLE Teams(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(24))");
+        jdbcTemplate.execute("CREATE TABLE Players(id INT PRIMARY KEY AUTO_INCREMENT, rank INT, name VARCHAR(24), " +
+                "pro_team VARCHAR(24), hand CHAR)");
+        jdbcTemplate.execute("CREATE TABLE Player_Info(player_id INT REFERENCES Players(id), position VARCHAR(2), " +
+                "drafted Boolean DEFAULT false)");
+        jdbcTemplate.execute("CREATE TABLE Rosters(team_id int REFERENCES Teams(id), " +
+                "player_id int REFERENCES Players(id))");
 
         log.info("Filling tables...");
         // Default teams

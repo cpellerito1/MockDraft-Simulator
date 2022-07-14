@@ -28,49 +28,52 @@ public class Draft {
 
     public void start() {
         // Get the users team name
-        System.out.println("Enter your team name: ");
+        System.out.print("Enter your team name: ");
         String n = input.nextLine();
         while (n.length() > 24) {
             System.out.println("Error: Team name too long, must be 24 characters or less\n Please enter new name: ");
             n = input.nextLine();
         }
-        // Create the users team object and add it to the database
-        user = new Team(n);
-        jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?",  n);
-        teams.add(user);
-
         // Get the teams from the database and add them to a list
-        for (int i = 1; i < 13; i++) {
+        for (int i = 1; i < 12; i++) {
             var sql = "SELECT name FROM teams WHERE id=" + i;
-            teams.add(new Team(jdbcTemplate.queryForObject(sql, String.class)));
+            teams.add(new Team(i, jdbcTemplate.queryForObject(sql, String.class)));
         }
 
-        for (Team t: teams)
-            System.out.println(t.getName());
+        // Create the users team object and add it to the database and list
+        jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?",  n);
+        user = new Team(jdbcTemplate.queryForObject("SELECT id FROM teams WHERE name='" + n + "'", int.class), n);
+        teams.add(user);
 
         // Start the draft
         // Randomize the order
         Collections.shuffle(teams);
+        for (Team t: teams)
+            System.out.println(t.getName());
         // Variables to keep track of the round, current pick, and direction of the increment for snake draft
-        int r = 0, cur = 0, inc = 1;
+        int r = 1, cur = 0, inc = 1;
 
         // Make first pick then start the while loop for the rest
         System.out.println("Draft starting");
-        pick(teams.get(cur));
+        pick(teams.get(0));
         cur++;
+        System.out.println("Round: " + r + " Pick: " + cur);
         // While loop that runs the draft for r rounds
         while (r <= 4) {
             System.out.println("Round: " + r + " Pick: " + cur);
             pick(teams.get(cur));
-            if (cur == 11) {
+            cur += inc;
+            if (cur == 12) {
                 inc = -1;
+                cur = 11;
                 r++;
-            } else if (cur == 0) {
+            } else if (cur == -1) {
                 inc = 1;
+                cur = 0;
                 r++;
-            } else
-                cur += inc;
+            }
         }
+        System.out.println("The draft has ended: to see a summary of the picks go to this link in a web browser: ");
     }
 
     /**
@@ -86,65 +89,81 @@ public class Draft {
             long maxVal = jdbcTemplate.queryForObject("SELECT MAX(id) FROM Players", Long.class);
             // Ask the user to make their pick and make sure the id entered is valid
             // ie is a long, is positive, has a player assigned to that id, and not already drafted
-            System.out.println("Enter the id of the user you would like to draft: ");
-            while (!input.hasNextLong() || input.nextLong() > maxVal ||
-                    input.nextLong() <= 0 || drafted.contains(input.nextLong())) {
-                System.out.println("Error: invalid id, please enter another id: ");
-                input.next();
+            System.out.print("Enter the id of the user you would like to draft: ");
+            String userInput = "";
+            boolean valid = false;
+            while (!valid) {
+                try {
+                    userInput = input.nextLine();
+                    long userDraft = Long.parseLong(userInput);
+                    if (userDraft > maxVal || userDraft <= 0 || drafted.contains(userDraft))
+                        throw new Exception();
+                } catch (Exception e) {
+                    System.out.print("Error: Invalid id, please enter another id: ");
+                    continue;
+                }
+                valid = true;
             }
-
+            System.out.println("Nice draft");
             // id of the player drafted
-            long id = input.nextLong();
-            // Update the team_id column for the player drafted
-            jdbcTemplate.update("UPDATE Players SET team_id=?, drafted=1 WHERE id=?", user.getId(), id);
+            long id = Long.parseLong(userInput);
+            // Insert drafted player into Roster table
+            jdbcTemplate.update("INSERT INTO Rosters(team_id, player_id) VALUES(?, ?)", user.getId(), id);
+            jdbcTemplate.update(("UPDATE Player_Info SET drafted=true WHERE player_id=?"), id);
             drafted.add(id);
             setRoster(user, id);
+            System.out.println("Congrats! You drafted Player: " + id);
         } else {
             // Set of needs for the auto drafting team
             HashSet<String> needs = new HashSet<>(t.roster.needs());
-            // List to hold the ids of the best player at each position of need
-            ArrayList<Long> players = new ArrayList<>();
-            for (String n : needs) {
-                System.out.println("needs: " + n);
+            // Temp Lists to hold positions
+            ArrayList<String> temp = new ArrayList<>();
+            for (Iterator<String> it = needs.iterator(); it.hasNext();) {
+                String n = it.next();
                 // Add positions if one of the needs is util, mid, or corner infielder
                 switch (n) {
                     case "util" -> {
-                        needs.addAll(List.of("1B", "2B", "3B", "SS", "C", "OF"));
-                        needs.remove(n);
-                        continue;
+                        it.remove();
+                        temp.addAll(List.of("1B", "2B", "3B", "SS", "C", "OF"));
                     }
                     case "mid" -> {
-                        needs.addAll(List.of("2B", "SS"));
-                        needs.remove(n);
-                        continue;
+                        it.remove();
+                        temp.addAll(List.of("2B", "SS"));
                     }
                     case "corner" -> {
-                        needs.addAll(List.of("1B", "3B"));
-                        needs.remove(n);
-                        continue;
+                        it.remove();
+                        temp.addAll(List.of("1B", "3B"));
                     }
                 }
+            }
+            // Add positions back to hashset
+            needs.addAll(temp);
+            // List to hold the ids of the best player at each position of need
+            ArrayList<Long> players = new ArrayList<>();
+            for (String n : needs) {
                 // Query for lowest ranked player
-                long player = jdbcTemplate.queryForObject("SELECT min(player_id) FROM Player_Info WHERE position='"
-                        + n + "'", Long.class);
-                System.out.println("Player: " + player);
+                long player = jdbcTemplate.queryForObject("SELECT min(player_id) FROM Player_Info Where " +
+                        "drafted=false AND position='" + n + "'", Long.class);
                 players.add(player);
             }
-            
+
             // Make the draft pick with the min id from the list of needs
             long player = Collections.min(players);
-            jdbcTemplate.update("UPDATE Players SET team_id=?, drafted=1 WHERE id=?", t.getId(), player);
+            jdbcTemplate.update("INSERT INTO Rosters(team_id, player_id) VALUES(?, ?)", t.getId(), player);
+            jdbcTemplate.update("UPDATE Player_info SET drafted=true WHERE player_id=?", player);
             drafted.add(player);
             setRoster(t, player);
-            System.out.println(t.getName() + " drafts player " + Collections.min(players));
+            System.out.println(t.getName() + " drafts player " + player);
         }
     }
 
     public void setRoster(Team team, Long id) {
         // Get the players position(s)
-        List<String> pos = List.of(jdbcTemplate.queryForObject(
-                "SELECT position FROM Player_Info WHERE player_id=" + id, String.class));
+        //List<String> pos = List.of(jdbcTemplate.queryForObject(
+          //      "SELECT position FROM Player_Info WHERE player_id=" + id, String.class));
         //.split("/"));
+        List<String> pos = List.of(jdbcTemplate.queryForObject("SELECT position FROM Player_Info " +
+                "WHERE player_id=" + id, String.class));
 
         // Get the empty positions
         List<String> needs = team.roster.needs();

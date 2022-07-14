@@ -7,7 +7,8 @@ public class Team {
 
     public Roster roster = new Roster();
 
-    public Team(String name) {
+    public Team(int id, String name) {
+        this.id = id;
         this.name = name;
     }
 
