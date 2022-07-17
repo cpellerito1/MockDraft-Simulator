@@ -1,16 +1,24 @@
 package com.example.fantasy;
 
+import org.slf4j.Logger;
+import org.slf4j.LoggerFactory;
+import org.springframework.beans.factory.annotation.Autowired;
+import org.springframework.boot.SpringApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
+import org.springframework.stereotype.Component;
 
 import java.util.*;
 
-
+@Component
 public class Draft {
+    private static final Logger log = LoggerFactory.getLogger(FantasyApplication.class);
+
+    JdbcTemplate jdbcTemplate;
+
+    public static List<Player> allPlayers = new ArrayList<>();
+
     // Create the scanner for getting user input
     Scanner input = new Scanner(System.in);
-
-    // jdbc template from the main class
-    JdbcTemplate jdbcTemplate;
 
     // Arraylist to store the teams from the database
     static ArrayList<Team> teams = new ArrayList<>();
@@ -22,11 +30,51 @@ public class Draft {
 
     static int count = 0;
 
-    public Draft(JdbcTemplate jdbc) {
-        this.jdbcTemplate = jdbc;
+    public Draft(JdbcTemplate j) {
+        this.jdbcTemplate = j;
+    }
+
+    public void load() {
+        log.info("Creating Tables...");
+
+        // Create tables
+        jdbcTemplate.execute("DROP TABLE Players, Team, Player_Info, Roster IF EXISTS");
+        jdbcTemplate.execute("CREATE TABLE Teams(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(24))");
+        jdbcTemplate.execute("CREATE TABLE Players(id INT PRIMARY KEY AUTO_INCREMENT, rank INT NOT NULL AUTO_INCREMENT," +
+                " name VARCHAR(24), pro_team VARCHAR(24), hand CHAR)");
+        jdbcTemplate.execute("CREATE TABLE Player_Info(player_id INT REFERENCES Players(id), position VARCHAR(2), " +
+                "drafted Boolean DEFAULT false)");
+        jdbcTemplate.execute("CREATE TABLE Rosters(team_id int REFERENCES Teams(id), " +
+                "player_id int REFERENCES Players(id))");
+
+        log.info("Filling tables...");
+        // Default teams
+        for (int i = 1; i < 12; i++) {
+            jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?", "Team " + i);
+        }
+
+        // Players
+        // Test data
+        int count = 0;
+        String[] poses = new String[]{"OF", "1B", "2B", "3B", "SS", "C", "RP", "SP"};
+        for (int i = 1; i < 800; i++) {
+            jdbcTemplate.update("INSERT INTO Players(name,pro_team, hand) VALUES (?, ?, ?)", "name" + i, "mets", 'r');
+        }
+        Random r = new Random();
+        for (int i = 1; i < 800; i++) {
+            jdbcTemplate.update("INSERT INTO Player_Info(player_id, position) VALUES(?, ?)", i, poses[r.nextInt(8)]);
+        }
+
+        List<Map<String, Object>> tempPlayers = jdbcTemplate.queryForList("SELECT * FROM Players join Player_Info " +
+                "where Players.id=Player_Info.player_id");
+        tempPlayers.forEach((P)-> allPlayers.add(new Player(Long.parseLong(P.get("id").toString()),
+                Long.parseLong(P.get("rank").toString()), P.get("name").toString(), P.get("pro_team").toString(),
+                P.get("hand").toString().charAt(0), List.of(P.get("position").toString()))));
     }
 
     public void start() {
+        // Load the database
+        load();
         // Get the users team name
         System.out.print("Enter your team name: ");
         String n = input.nextLine();

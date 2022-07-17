@@ -8,55 +8,25 @@ import org.springframework.boot.SpringApplication;
 import org.springframework.boot.autoconfigure.SpringBootApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
 
+import java.util.ArrayList;
+import java.util.List;
+import java.util.Map;
 import java.util.Random;
 
 @SpringBootApplication
-public class FantasyApplication implements CommandLineRunner {
-
-    private static final Logger log = LoggerFactory.getLogger(FantasyApplication.class);
+public class FantasyApplication implements CommandLineRunner{
 
     public static void main(String[] args) {
         SpringApplication.run(FantasyApplication.class, args);
     }
+
 
     @Autowired
     JdbcTemplate jdbcTemplate;
 
     @Override
     public void run(String... strings) throws Exception {
-
-        log.info("Creating Tables...");
-
-        // Create tables
-        jdbcTemplate.execute("DROP TABLE Players, Team, Player_Info, Roster IF EXISTS");
-        jdbcTemplate.execute("CREATE TABLE Teams(id INT PRIMARY KEY AUTO_INCREMENT, name VARCHAR(24))");
-        jdbcTemplate.execute("CREATE TABLE Players(id INT PRIMARY KEY AUTO_INCREMENT, rank INT, name VARCHAR(24), " +
-                "pro_team VARCHAR(24), hand CHAR)");
-        jdbcTemplate.execute("CREATE TABLE Player_Info(player_id INT REFERENCES Players(id), position VARCHAR(2), " +
-                "drafted Boolean DEFAULT false)");
-        jdbcTemplate.execute("CREATE TABLE Rosters(team_id int REFERENCES Teams(id), " +
-                "player_id int REFERENCES Players(id))");
-
-        log.info("Filling tables...");
-        // Default teams
-        for (int i = 1; i < 12; i++) {
-            jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?", "Team " + i);
-        }
-
-        // Players
-        // Test data
-        int count = 0;
-        String[] poses = new String[]{"OF", "1B", "2B", "3B", "SS", "C", "RP", "SP"};
-        for (int i = 1; i < 800; i++) {
-            jdbcTemplate.update("INSERT INTO Players(name) VALUES ?", "name" + i);
-        }
-        Random r = new Random();
-        for (int i = 1; i < 800; i++) {
-            jdbcTemplate.update("INSERT INTO Player_Info(player_id, position) VALUES(?, ?)", i, poses[r.nextInt(8)]);
-        }
-
-        //System.out.println(jdbcTemplate.queryForList("SELECT * FROM Player_Info"));
-
+        // Start the draft
         Draft d = new Draft(jdbcTemplate);
         d.start();
 

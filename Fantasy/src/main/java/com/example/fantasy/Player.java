@@ -17,12 +17,13 @@ public class Player {
 
     private int teamID;
 
-    public Player(long rank, String name, String proTeam, List<String> position, char hand) {
+    public Player(long id, long rank, String name, String proTeam, char hand, List<String> position) {
+        this.id = id;
         this.rank = rank;
         this.name = name;
         this.proTeam = proTeam;
-        this.position = position;
         this.hand = hand;
+        this.position = position;
     }
 
     public long getId() {
