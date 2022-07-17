@@ -1,0 +1,35 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Getting Started: Serving Web Content</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<div class="playerlist" th:unless="${#lists.isEmpty(allPlayers)}">
+
+    <h2>Players</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Rank</th>
+            <th>Name</th>
+            <th>Team</th>
+            <th>Hand</th>
+            <th>Positions</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="p : ${allPlayers}">
+            <td th:text="${p.id}"></td>
+            <td th:text="${p.rank}"></td>
+            <td th:text="${p.name}"></td>
+            <td th:text="${p.proTeam}"></td>
+            <td th:text="${p.hand}"></td>
+            <td th:text="${p.position}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
