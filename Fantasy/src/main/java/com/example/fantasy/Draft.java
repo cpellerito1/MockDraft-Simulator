@@ -2,8 +2,6 @@ package com.example.fantasy;
 
 import org.slf4j.Logger;
 import org.slf4j.LoggerFactory;
-import org.springframework.beans.factory.annotation.Autowired;
-import org.springframework.boot.SpringApplication;
 import org.springframework.jdbc.core.JdbcTemplate;
 import org.springframework.stereotype.Component;
 
@@ -15,7 +13,7 @@ public class Draft {
 
     JdbcTemplate jdbcTemplate;
 
-    public static List<Player> allPlayers = new ArrayList<>();
+    public static HashMap<Long, Team> draftHistory = new HashMap<>();
 
     // Create the scanner for getting user input
     Scanner input = new Scanner(System.in);
@@ -64,17 +62,19 @@ public class Draft {
         for (int i = 1; i < 800; i++) {
             jdbcTemplate.update("INSERT INTO Player_Info(player_id, position) VALUES(?, ?)", i, poses[r.nextInt(8)]);
         }
-
-        List<Map<String, Object>> tempPlayers = jdbcTemplate.queryForList("SELECT * FROM Players join Player_Info " +
-                "where Players.id=Player_Info.player_id");
-        tempPlayers.forEach((P)-> allPlayers.add(new Player(Long.parseLong(P.get("id").toString()),
-                Long.parseLong(P.get("rank").toString()), P.get("name").toString(), P.get("pro_team").toString(),
-                P.get("hand").toString().charAt(0), List.of(P.get("position").toString()))));
     }
 
     public void start() {
         // Load the database
         load();
+        // Give link to user to view players
+        System.out.printf("%s%s%n", "To view the list of draft-able players, visit this link in a web browser: ",
+                "http://localhost:8080/players");
+
+        // Press enter to continue
+        System.out.println("Press Enter to continue");
+        try { input.nextLine(); } catch (Exception ignored) {}
+
         // Get the users team name
         System.out.print("Enter your team name: ");
         String n = input.nextLine();
@@ -107,7 +107,7 @@ public class Draft {
         cur++;
         System.out.println("Round: " + r + " Pick: " + cur);
         // While loop that runs the draft for r rounds
-        while (r <= 4) {
+        while (r <= 27) {
             System.out.println("Round: " + r + " Pick: " + cur);
             pick(teams.get(cur));
             cur += inc;
@@ -160,6 +160,7 @@ public class Draft {
             jdbcTemplate.update(("UPDATE Player_Info SET drafted=true WHERE player_id=?"), id);
             drafted.add(id);
             setRoster(user, id);
+            draftHistory.put(id, user);
             System.out.println("Congrats! You drafted Player: " + id);
         } else {
             // Set of needs for the auto drafting team
@@ -201,15 +202,13 @@ public class Draft {
             jdbcTemplate.update("UPDATE Player_info SET drafted=true WHERE player_id=?", player);
             drafted.add(player);
             setRoster(t, player);
+            draftHistory.put(player, t);
             System.out.println(t.getName() + " drafts player " + player);
         }
     }
 
     public void setRoster(Team team, Long id) {
         // Get the players position(s)
-        //List<String> pos = List.of(jdbcTemplate.queryForObject(
-          //      "SELECT position FROM Player_Info WHERE player_id=" + id, String.class));
-        //.split("/"));
         List<String> pos = List.of(jdbcTemplate.queryForObject("SELECT position FROM Player_Info " +
                 "WHERE player_id=" + id, String.class));
 
@@ -228,5 +227,18 @@ public class Draft {
             team.roster.setCorner(id);
         else
             team.roster.addBench(id);
+    }
+
+    public List<Player> getUndraftedPlayers() {
+        List<Player> allPlayers = new ArrayList<>();
+        List<Map<String, Object>> tempPlayers = jdbcTemplate.queryForList("SELECT * FROM Players join Player_Info " +
+                "where Players.id=Player_Info.player_id");
+
+        tempPlayers.forEach((P)-> allPlayers.add(new Player(Long.parseLong(P.get("id").toString()),
+                Long.parseLong(P.get("rank").toString()), P.get("name").toString(), P.get("pro_team").toString(),
+                P.get("hand").toString().charAt(0), List.of(P.get("position").toString()))));
+
+        return allPlayers;
+
     }
 }

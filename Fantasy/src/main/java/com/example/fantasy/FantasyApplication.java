@@ -15,19 +15,18 @@ import java.util.Random;
 
 @SpringBootApplication
 public class FantasyApplication implements CommandLineRunner{
+    @Autowired
+    JdbcTemplate jdbcTemplate;
+
+    public Draft d = new Draft(jdbcTemplate);
 
     public static void main(String[] args) {
         SpringApplication.run(FantasyApplication.class, args);
     }
 
-
-    @Autowired
-    JdbcTemplate jdbcTemplate;
-
     @Override
     public void run(String... strings) throws Exception {
         // Start the draft
-        Draft d = new Draft(jdbcTemplate);
         d.start();
 
 
