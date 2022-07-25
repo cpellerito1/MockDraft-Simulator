@@ -11,9 +11,9 @@ import java.util.List;
 @Controller
 public class DraftController {
 
-    @ModelAttribute("undraftedPlayers")
+    @ModelAttribute("allPlayers")
     public List<Player> getPlayers() {
-        return d.getUndraftedPlayers();
+        return Draft.allPlayers;
     }
 
     @ModelAttribute("draftHistory")
