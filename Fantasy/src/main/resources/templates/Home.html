@@ -1,0 +1,15 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Draft</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<h1>Welcome to Fantasy Mock Draft Simulator!!</h1>
+<h2>Please enter your team name</h2>
+<form action="#" th:action="@{/draft}" th:object="${team}" method="post">
+    <p>name: <input type="text" th:field="*{name}" minLength="1" maxlength="24"/> </p>
+    <p><input type="submit" value="Continue"/></p>
+</form>
+</body>
+</html>

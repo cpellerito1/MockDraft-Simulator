@@ -1,0 +1,27 @@
+<!DOCTYPE HTML>
+<html xmlns:th="http://www.thymeleaf.org">
+<head>
+    <title>Draft</title>
+    <meta http-equiv="Content-Type" content="text/html; charset=UTF-8" />
+</head>
+<body>
+<div class="history" th:unless="${#maps.isEmpty(draftHistory)}">
+
+    <h2>History</h2>
+    <table>
+        <thead>
+        <tr>
+            <th>ID</th>
+            <th>Team name</th>
+        </tr>
+        </thead>
+        <tbody>
+        <tr th:each="h : ${draftHistory}">
+            <td th:text="${h.key}"></td>
+            <td th:text="${h.value.name}"></td>
+        </tr>
+        </tbody>
+    </table>
+</div>
+</body>
+</html>
