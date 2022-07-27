@@ -53,23 +53,23 @@ public class Draft {
         System.out.println("Press Enter to continue");
         try { input.nextLine(); } catch (Exception ignored) {}
 
-        // Get the users team name
-        System.out.print("Enter your team name: ");
-        String n = input.nextLine();
-        while (n.length() > 24) {
-            System.out.println("Error: Team name too long, must be 24 characters or less\n Please enter new name: ");
-            n = input.nextLine();
-        }
+//        // Get the users team name
+//        System.out.print("Enter your team name: ");
+//        String n = input.nextLine();
+//        while (n.length() > 24) {
+//            System.out.println("Error: Team name too long, must be 24 characters or less\n Please enter new name: ");
+//            n = input.nextLine();
+//        }
         // Get the teams from the database and add them to a list
         for (int i = 1; i < 12; i++) {
             var sql = "SELECT name FROM teams WHERE id=" + i;
             teams.add(new Team(i, jdbcTemplate.queryForObject(sql, String.class)));
         }
 
-        // Create the users team object and add it to the database and list
-        jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?",  n);
-        user = new Team(jdbcTemplate.queryForObject("SELECT id FROM teams WHERE name='" + n + "'", int.class), n);
-        teams.add(user);
+//        // Create the users team object and add it to the database and list
+//        jdbcTemplate.update("INSERT INTO Teams(name) VALUES ?",  n);
+//        user = new Team(jdbcTemplate.queryForObject("SELECT id FROM teams WHERE name='" + n + "'", int.class), n);
+//        teams.add(user);
 
         // Start the draft
         // Randomize the order
